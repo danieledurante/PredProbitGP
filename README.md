@@ -1,6 +1,6 @@
 # PredProbitGP: Scalable computation of predictive probabilities in probit models with GP priors
 
-This repository is associated with the article [** Scalable computation of predictive probabilities in probit models with Gaussian process priors**](https://arxiv.org/abs/2009.01471) and aims at providing detailed materials and codes to implement the methods presented in the article.
+This repository is associated with the article [**Scalable computation of predictive probabilities in probit models with Gaussian process priors**](https://arxiv.org/abs/2009.01471) and aims at providing detailed materials and codes to implement the methods presented in the article.
 
 The documentation is organized in two main parts described below.  
 
