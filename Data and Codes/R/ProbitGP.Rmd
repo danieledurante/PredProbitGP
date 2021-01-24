@@ -1,0 +1,123 @@
+---
+title: "ProbitGP"
+author: "Jian Cao"
+date: "January 21, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(mvtnorm)
+library(fields)
+library(RColorBrewer)
+library(tlrmvnmvt)
+library(TruncatedNormal)
+```
+
+## Generate GP in 2D
+To generate a Gaussian process on the 2D plane, we first generate $n = 10^4$ known locations on a $100 \times 100$ grid in the unit square.
+```{r}
+m <- 100
+n <- m * m
+geom <- cbind(kronecker(seq(0, 1, length.out = m), rep(1, m)),
+              kronecker(rep(1, m), seq(0, 1, length.out = m)))
+```
+Then we generate $100$ unknown locations on a $10 \times 10$ grid in the unit square and another $100$ unknown locations randomly in the unit square.
+```{r}
+nUnknown <- 100
+geomTmp <- geom[(geom[, 1] < 1 - 0.9 / (m - 1)) & 
+                  (geom[, 2] < 1 - 0.9 / (m - 1)), ]
+geomUnknownRnd <- geomTmp[sample(1 : (n - 2 * m + 1), nUnknown, F), ] + 
+  matrix(runif(nUnknown, 0.2 / m, 0.8 / m), nUnknown, 2)
+geomUnknownGrid <- cbind(kronecker(seq(0.21, 0.39, length.out = 10), rep(1, 10)),
+                     kronecker(rep(1, 10), seq(0.41, 0.59, length.out = 10)))
+```
+Define a function used for simulating Gaussian processes under the squared exponential kernel $\exp(- \| \mbox{diag}(\alpha_1, \alpha_2)(s_1 - s_2)\|^2)$ on the 2D plane.
+```{r}
+grf_gen <- function(geom, alpha)
+{
+  if(ncol(geom) != 2)
+    stop("grf_gen: only works under 2D geometry")
+  if(min(geom) < 0 || max(geom) > 1)
+    warning("grf_gen: geom is not in the unit square")
+  n <- nrow(geom)
+  geom[, 1] <- geom[, 1] * alpha[1]
+  geom[, 2] <- geom[, 2] * alpha[2]
+  distM <- as.matrix(dist(geom))
+  covM <- exp(- distM^2)
+  return(as.vector(mvtnorm::rmvnorm(1, sigma = covM)))
+}
+```
+Simulate the probabilities at both known and unknown locations, with which we draw a 2D heatmap.
+```{r}
+alpha1 <- sqrt(30)
+alpha2 <- sqrt(30)
+alpha <- c(alpha1, alpha2)
+prTtl <- pnorm(grf_gen(rbind(geom, geomUnknownRnd, geomUnknownGrid), alpha))
+prUnknownRnd <- prTtl[(n + 1) : (n + nUnknown)]
+prUnknownGrid <- prTtl[(n + nUnknown + 1) : length(prTtl)]
+z <- matrix(prTtl, m, m)
+```
+Heatmap with randomly distributed unknown locations.
+```{r}
+image.plot(seq(0,1,length.out=m),seq(0,1,length.out=m),z,col=colorRampPalette(brewer.pal(11,"RdBu")[11:1])(30),xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1, cex.axis = 0.9,legend.shrink = 0.8,legend.cex=2,legend.width = 2,mgp=c(2,1,0))
+points(x = geomUnknownRnd[, 1], y = geomUnknownRnd[, 2], col = "white", cex = 0.6, pch=21, bg="white")
+```
+Heatmap with unknown locations distributed on a grid.
+```{r}
+image.plot(seq(0,1,length.out=m),seq(0,1,length.out=m),z,col=colorRampPalette(brewer.pal(11,"RdBu")[11:1])(30),xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1, cex.axis = 0.9,legend.shrink = 0.8,legend.cex=2,legend.width = 2,mgp=c(2,1,0))
+points(x = geomUnknownGrid[, 1], y = geomUnknownGrid[, 2], col = "white", cex = 0.6, pch=21, bg="white")
+```
+
+## Estimate model parameters with TN and TLR
+First simulate the binary reponses at all locations.
+```{r}
+yTtl <- rbinom(n = n + 200, size = 1, prob = prTtl)
+```
+Two functions for computing the marginal probabilities used in point-estimating the model parameters, one based on `tlrmvnmvt` package, the other based on `TruncatedNormal` package.
+```{r}
+mle_func_TLR <- function(geom, y, alpha)
+{
+  n <- nrow(geom)
+  xi <- rep(0, n)
+  geom[, 1] <- geom[, 1] * alpha[1]
+  geom[, 2] <- geom[, 2] * alpha[2]
+  distM <- as.matrix(dist(geom))
+  covM <- exp(- distM^2)
+  xi <- (2 * y - 1) * xi
+  covM <- outer(2 * y - 1, 2 * y - 1) * covM
+  diag(covM) <- diag(covM) + 1
+  return(tlrmvnmvt::pmvn(lower = rep(-Inf, n), upper = xi, sigma = covM, uselog2 = T, N = 998, 
+                             algorithm = TLRQMC(m = round(sqrt(nrow(covM))), epsl = 1e-4)))
+}
+mle_func_TN <- function(geom, y, alpha)
+{
+  n <- nrow(geom)
+  xi <- rep(0, n)
+  geom[, 1] <- geom[, 1] * alpha[1]
+  geom[, 2] <- geom[, 2] * alpha[2]
+  distM <- as.matrix(dist(geom))
+  covM <- exp(- distM^2)
+  xi <- (2 * y - 1) * xi
+  covM <- outer(2 * y - 1, 2 * y - 1) * covM
+  diag(covM) <- diag(covM) + 1
+  return(TruncatedNormal::pmvnorm(mu = rep(0, length(xi)), sigma = covM, 
+                                  log = TRUE, ub = xi)[[1]])
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
