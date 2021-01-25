@@ -76,7 +76,7 @@ yTtl <- rbinom(n = n + 200, size = 1, prob = prTtl)
 ```
 Two functions for computing the marginal probabilities used in point-estimating the model parameters, one based on `tlrmvnmvt` package, the other based on `TruncatedNormal` package.
 ```{r}
-mle_func_TLR <- function(geom, y, alpha)
+mle_func_TLR <- function(alpha, geom, y)
 {
   n <- nrow(geom)
   xi <- rep(0, n)
@@ -87,10 +87,12 @@ mle_func_TLR <- function(geom, y, alpha)
   xi <- (2 * y - 1) * xi
   covM <- outer(2 * y - 1, 2 * y - 1) * covM
   diag(covM) <- diag(covM) + 1
-  return(tlrmvnmvt::pmvn(lower = rep(-Inf, n), upper = xi, sigma = covM, uselog2 = T, N = 998, 
-                             algorithm = TLRQMC(m = round(sqrt(nrow(covM))), epsl = 1e-4)))
+  ret <- tlrmvnmvt::pmvn(lower = rep(-Inf, n), upper = xi, sigma = covM, uselog2 = T, N = 998, 
+                             algorithm = TLRQMC(m = round(sqrt(nrow(covM))), epsl = 1e-4))
+  cat("TLR: ", alpha, " -- ", ret, "\n")
+  return(ret)
 }
-mle_func_TN <- function(geom, y, alpha)
+mle_func_TN <- function(alpha, geom, y)
 {
   n <- nrow(geom)
   xi <- rep(0, n)
@@ -101,14 +103,34 @@ mle_func_TN <- function(geom, y, alpha)
   xi <- (2 * y - 1) * xi
   covM <- outer(2 * y - 1, 2 * y - 1) * covM
   diag(covM) <- diag(covM) + 1
-  return(TruncatedNormal::pmvnorm(mu = rep(0, length(xi)), sigma = covM, 
-                                  log = TRUE, ub = xi)[[1]])
+  ret <- TruncatedNormal::pmvnorm(mu = rep(0, length(xi)), sigma = covM, 
+                                  log = TRUE, ub = xi)[[1]]
+  cat("TN: ", alpha, " -- ", ret, "\n")
+  return(ret)
 }
 ```
-
-
-
-
+Define the parameter space for point-searching `alpha`.
+```{r}
+alphaVec <- sqrt(seq(15, 45, length.out = 10))
+alphaPool <- cbind(kronecker(alphaVec, rep(1, length(alphaVec))), kronecker(rep(1, length(alphaVec)), alphaVec))
+```
+Select a sub-grid for parameter estimation.
+```{r}
+mSub <- 25
+idx1D <- round(seq(1, m, length.out = mSub))
+idx2D <- c(kronecker(idx1D - 1, rep(m, mSub)) + idx1D)
+```
+Point search using `mle_func_TLR`.
+```{r}
+lkVecTLR <- apply(alphaPool, 1, mle_func_TLR, geom = geom[idx2D, ], y = yTtl[idx2D])
+alphaTLR <- alphaPool[which.max(lkVecTLR), ]
+```
+Point search using `mle_func_TLR`.
+```{r}
+lkVecTN <- apply(alphaPool, 1, mle_func_TN, geom = geom[idx2D, ], y = yTtl[idx2D])
+alphaTN <- alphaPool[which.max(lkVecTN), ]
+```
+## Prediction at Unknown locations
 
 
 
