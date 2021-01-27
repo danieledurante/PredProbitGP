@@ -73,6 +73,7 @@ points(x = geomUnknownGrid[, 1], y = geomUnknownGrid[, 2], col = "white", cex = 
 First simulate the binary reponses at all locations.
 ```{r}
 yTtl <- rbinom(n = n + 200, size = 1, prob = prTtl)
+y <- yTtl[1 : n]
 ```
 Two functions for computing the marginal probabilities used in point-estimating the model parameters, one based on `tlrmvnmvt` package, the other based on `TruncatedNormal` package.
 ```{r}
@@ -131,6 +132,55 @@ lkVecTN <- apply(alphaPool, 1, mle_func_TN, geom = geom[idx2D, ], y = yTtl[idx2D
 alphaTN <- alphaPool[which.max(lkVecTN), ]
 ```
 ## Prediction at Unknown locations
+Here, we compare four methods for the prediction at the unknown locations, namely
+  * Using marginal MVN ratio by adapting the `tlrmvnmvt` package
+  * Using the `TruncatedNormal` package to compute the numerator and the denominator
+  * Using Rstan to simulate the posterior distribution of $y$ and perform kriging at unknown locations
+  * Using mean-field variational Bayes to approximation the posterior distribution of $y$
+First, let's install the modified `tlrmvnmvt` package. 
+```{r}
+install.packages("tlrmvnratio.tar.gz", repos = NULL, method = "source")
+```
+After installing the `tlrmvnratio` package, we can estimate Equation~(6) with the `mvn.ratio.tlr` function. To use the `mvn.ratio.tlr` function, we construct $\Sigma_{-(n + 1)}$ as shown in Equation~(6).
+```{r}
+nSub <- mSub^2
+ySub <- yTtl[idx2D]
+geomSub <- geom[idx2D, , drop = F]
+covM <- matrix(0, nSub + 1, nSub + 1)
+covM[1 : nSub, 1 : nSub] <- as.matrix(dist(geomSub))
+covM[1 : nSub, 1 : nSub] <- exp(- covM[1 : nSub, 1 : nSub]^2 * alphaTLR)
+covM[1 : nSub, 1 : nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1 : nSub, 1 : nSub]
+diag(covM[1 : nSub, 1 : nSub]) <- diag(covM[1 : nSub, 1 : nSub]) + 1
+covM[nSub + 1, nSub + 1] <- 2
+```
+Now we come to the estimation at each unknown location.
+```{r}
+predRnd <- rep(NA, nrow(geomUnknownRnd))
+predGrid <- rep(NA, nrow(geomUnknownGrid))
+for(i in 1 : nrow(geomUnknownRnd))
+{
+  geomTmp <- geomSub
+  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownRnd[i, 1]
+  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownRnd[i, 2]
+  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2) * alphaTLR)
+  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
+  predRnd[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
+                                           N = 998, epsl = 1e-4)[[1]]
+}
+for(i in 1 : nrow(geomUnknownGrid))
+{
+  geomTmp <- geomSub
+  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownGrid[i, 1]
+  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownGrid[i, 2]
+  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2) * alphaTLR)
+  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
+  predGrid[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
+                                           N = 998, epsl = 1e-4)[[1]]
+}
+```
+
+
+
 
 
 
