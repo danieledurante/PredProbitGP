@@ -146,9 +146,10 @@ After installing the `tlrmvnratio` package, we can estimate Equation~(6) with th
 nSub <- mSub^2
 ySub <- yTtl[idx2D]
 geomSub <- geom[idx2D, , drop = F]
+geomSub[, 1] <- geomSub[, 1] * alphaTLR[1]
+geomSub[, 2] <- geomSub[, 2] * alphaTLR[2]
 covM <- matrix(0, nSub + 1, nSub + 1)
-covM[1 : nSub, 1 : nSub] <- as.matrix(dist(geomSub))
-covM[1 : nSub, 1 : nSub] <- exp(- covM[1 : nSub, 1 : nSub]^2 * alphaTLR)
+covM[1 : nSub, 1 : nSub] <- exp(- (as.matrix(dist(geomSub)))^2)
 covM[1 : nSub, 1 : nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1 : nSub, 1 : nSub]
 diag(covM[1 : nSub, 1 : nSub]) <- diag(covM[1 : nSub, 1 : nSub]) + 1
 covM[nSub + 1, nSub + 1] <- 2
@@ -160,9 +161,9 @@ predGrid <- rep(NA, nrow(geomUnknownGrid))
 for(i in 1 : nrow(geomUnknownRnd))
 {
   geomTmp <- geomSub
-  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownRnd[i, 1]
-  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownRnd[i, 2]
-  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2) * alphaTLR)
+  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownRnd[i, 1] * alphaTLR[1]
+  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownRnd[i, 2] * alphaTLR[2]
+  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
   covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
   predRnd[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
                                            N = 998, epsl = 1e-4)[[1]]
@@ -170,9 +171,9 @@ for(i in 1 : nrow(geomUnknownRnd))
 for(i in 1 : nrow(geomUnknownGrid))
 {
   geomTmp <- geomSub
-  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownGrid[i, 1]
-  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownGrid[i, 2]
-  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2) * alphaTLR)
+  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownGrid[i, 1] * alphaTLR[1]
+  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownGrid[i, 2] * alphaTLR[2]
+  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
   covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
   predGrid[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
                                            N = 998, epsl = 1e-4)[[1]]
