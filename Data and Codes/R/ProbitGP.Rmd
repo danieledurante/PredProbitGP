@@ -12,6 +12,8 @@ library(fields)
 library(RColorBrewer)
 library(tlrmvnmvt)
 library(TruncatedNormal)
+library(pROC)
+library(rstan)
 ```
 
 ## Generate GP in 2D
@@ -158,6 +160,7 @@ Now we come to the estimation at each unknown location.
 ```{r}
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
+startTime <- Sys.time()
 for(i in 1 : nrow(geomUnknownRnd))
 {
   geomTmp <- geomSub
@@ -176,12 +179,74 @@ for(i in 1 : nrow(geomUnknownGrid))
   covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
   covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
   predGrid[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
-                                           N = 998, epsl = 1e-4)[[1]]
+                                            N = 998, epsl = 1e-4)[[1]]
 }
+endTime <- Sys.time()
+timeCost <- as.numeric(endTime - startTime) / 2
+aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
+MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
+aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
+MSEGrid <- sum((prTtl[(n + 101) : (n + 200)] - predGrid)^2) / 100
+cat("Time[seconds]:", timeCost, "\n",
+    "MSE[random]", MSERnd, "\n",
+    "MSE[grid]", MSEGrid, "\n",
+    "AUC[random]:", aucRnd, "\n",
+    "AUC[grid]:", aucgrid, "\n")
 ```
-
-
-
+Now we will prediction at each location by separately computing the numerator and the denominator of Equation~(6) with the `TruncatedNormal` package.
+```{r}
+geomSub <- geom[idx2D, , drop = F]
+geomSub[, 1] <- geomSub[, 1] * alphaTN[1]
+geomSub[, 2] <- geomSub[, 2] * alphaTN[2]
+covM <- matrix(0, nSub + 1, nSub + 1)
+covM[1 : nSub, 1 : nSub] <- exp(- (as.matrix(dist(geomSub)))^2)
+covM[1 : nSub, 1 : nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1 : nSub, 1 : nSub]
+diag(covM[1 : nSub, 1 : nSub]) <- diag(covM[1 : nSub, 1 : nSub]) + 1
+covM[nSub + 1, nSub + 1] <- 2
+predRnd <- rep(NA, nrow(geomUnknownRnd))
+predGrid <- rep(NA, nrow(geomUnknownGrid))
+startTime <- Sys.time()
+denormTN <- TruncatedNormal::pmvnorm(mu = rep(0, nSub), 
+                                     sigma = covM[1 : nSub, 1 : nSub], 
+                                     lb = rep(-Inf, nSub),
+                                     ub = rep(0, nSub))[[1]]
+for(i in 1 : nrow(geomUnknownRnd))
+{
+  geomTmp <- geomSub
+  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownRnd[i, 1] * alphaTN[1]
+  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownRnd[i, 2] * alphaTN[2]
+  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
+  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
+  predRnd[i] <- TruncatedNormal::pmvnorm(mu = rep(0, nSub + 1), 
+                                         sigma = covM, 
+                                         lb = rep(-Inf, nSub + 1),
+                                         ub = rep(0, nSub + 1))[[1]] / denormTN
+}
+for(i in 1 : nrow(geomUnknownGrid))
+{
+  geomTmp <- geomSub
+  geomTmp[, 1] <- geomTmp[, 1] - geomUnknownGrid[i, 1] * alphaTN[1]
+  geomTmp[, 2] <- geomTmp[, 2] - geomUnknownGrid[i, 2] * alphaTN[2]
+  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
+  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
+  predGrid[i] <- TruncatedNormal::pmvnorm(mu = rep(0, nSub + 1), 
+                                         sigma = covM, 
+                                         lb = rep(-Inf, nSub + 1),
+                                         ub = rep(0, nSub + 1))[[1]] / denormTN
+}
+endTime <- Sys.time()
+timeCost <- as.numeric(endTime - startTime) / 2
+aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
+MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
+aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
+MSEGrid <- sum((prTtl[(n + 101) : (n + 200)] - predGrid)^2) / 100
+cat("Time[seconds]:", timeCost, "\n",
+    "MSE[random]", MSERnd, "\n",
+    "MSE[grid]", MSEGrid, "\n",
+    "AUC[random]:", aucRnd, "\n",
+    "AUC[grid]:", aucgrid, "\n")
+```
+Next, we perform the prediction with `rstan`.
 
 
 
