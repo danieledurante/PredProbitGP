@@ -182,7 +182,7 @@ for(i in 1 : nrow(geomUnknownGrid))
                                             N = 998, epsl = 1e-4)[[1]]
 }
 endTime <- Sys.time()
-timeCost <- as.numeric(endTime - startTime) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, "secs")) / 2
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
 aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
@@ -191,7 +191,7 @@ cat("Time[seconds]:", timeCost, "\n",
     "MSE[random]", MSERnd, "\n",
     "MSE[grid]", MSEGrid, "\n",
     "AUC[random]:", aucRnd, "\n",
-    "AUC[grid]:", aucgrid, "\n")
+    "AUC[grid]:", aucGrid, "\n")
 ```
 Now we will prediction at each location by separately computing the numerator and the denominator of Equation~(6) with the `TruncatedNormal` package.
 ```{r}
@@ -235,7 +235,7 @@ for(i in 1 : nrow(geomUnknownGrid))
                                          ub = rep(0, nSub + 1))[[1]] / denormTN
 }
 endTime <- Sys.time()
-timeCost <- as.numeric(endTime - startTime) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, "secs")) / 2
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
 aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
@@ -244,7 +244,7 @@ cat("Time[seconds]:", timeCost, "\n",
     "MSE[random]", MSERnd, "\n",
     "MSE[grid]", MSEGrid, "\n",
     "AUC[random]:", aucRnd, "\n",
-    "AUC[grid]:", aucgrid, "\n")
+    "AUC[grid]:", aucGrid, "\n")
 ```
 Next, we perform the prediction with `rstan`.
 
