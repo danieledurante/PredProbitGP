@@ -121,7 +121,7 @@ alphaPool <- cbind(kronecker(alphaVec, rep(1, length(alphaVec))), kronecker(rep(
 ```
 Select a sub-grid for parameter estimation.
 ```{r select a sub-grid for estimation and prediction}
-mSub <- 25
+mSub <- 50
 nSub <- mSub^2
 idx1D <- round(seq(1, m, length.out = mSub))
 idx2D <- c(kronecker(idx1D - 1, rep(m, mSub)) + idx1D)
@@ -132,7 +132,7 @@ lkVecTLR <- apply(alphaPool, 1, mle_func_TLR, geom = geom[idx2D, ], y = yTtl[idx
 alphaTLR <- alphaPool[which.max(lkVecTLR), ]
 ```
 Point search using `mle_func_TLR`.
-```{r likelihood TN}
+```{r likelihood TN, warning=F}
 lkVecTN <- apply(alphaPool, 1, mle_func_TN, geom = geom[idx2D, ], y = yTtl[idx2D])
 alphaTN <- alphaPool[which.max(lkVecTN), ]
 ```
@@ -143,7 +143,7 @@ Here, we compare four methods for the prediction at the unknown locations, namel
   * Using Rstan to simulate the posterior distribution of $y$ and perform kriging at unknown locations
   * Using mean-field variational Bayes to approximation the posterior distribution of $y$
 First, let's install the modified `tlrmvnmvt` package. 
-```{r install tlrmvnratio package, echo = F, message = FALSE, warning = F}
+```{r install tlrmvnratio package, echo=FALSE, cache=FALSE, results=FALSE, warning=FALSE, comment=FALSE}
 install.packages("tlrmvnratio.tar.gz", repos = NULL, method = "source")
 ```
 After installing the `tlrmvnratio` package, we can estimate Equation~(6) with the `mvn.ratio.tlr` function. To use the `mvn.ratio.tlr` function, we construct $\Sigma_{-(n + 1)}$ as shown in Equation~(6).
@@ -184,7 +184,7 @@ for(i in 1 : nrow(geomUnknownGrid))
                                             N = 998, epsl = 1e-4)[[1]]
 }
 endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, "secs")) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
 aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
@@ -237,7 +237,7 @@ for(i in 1 : nrow(geomUnknownGrid))
                                          ub = rep(0, nSub + 1))[[1]] / denormTN
 }
 endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, "secs")) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
 aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
@@ -270,7 +270,7 @@ model {
 ```
 When comparing with STAN, we assume that the true parameters values, i.e., `alpha1` and `alpha2` are known, with which we construct the inputs `mu` and `Omega`.
 ```{r parameters for STAN}
-mu <- rep(0, n)
+mu <- rep(0, nSub)
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alpha[1]
 geomSub[, 2] <- geomSub[, 2] * alpha[2]
@@ -280,7 +280,7 @@ diag(covM) <- diag(covM) + 1e-2
 Notice that we also add a nugget effect to the diagonal entries to avoid singularity. With the defined parameters, we can call STAN to simulate the posterior samples of `g`. 
 ```{r posterior simulation with STAN}
 startTime <- Sys.time()
-parmsSTAN <- list(N = nsub, Y = ysub, mu = mu, Omega = covM)
+parmsSTAN <- list(N = length(ySub), Y = ySub, mu = mu, Omega = covM)
 HMCSamples <- stan(model_code = probmodel, data = parmsSTAN, 
                     iter = 20000, warmup = 10000, chains = 1, init="0",
                     algorithm="NUTS", seed=123)
@@ -299,7 +299,7 @@ gUnknown <- apply(X = gHMC, MARGIN = 2,
                                      cov.pars = c(1, 1 / alpha[1]),
                                      kappa = 2, nugget = 0))$predict})
 endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, "secs")) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 ```
 Compute the probit response function and then take the average as the probability estimation at unknown locations, based on which the MSE and AUC are computed.
 ```{r predict prob by STAN}
