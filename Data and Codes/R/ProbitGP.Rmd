@@ -23,32 +23,37 @@ To generate a Gaussian process on the 2D plane, we first generate $n = 10^4$ kno
 ```{r generate known locations}
 m <- 100
 n <- m * m
-geom <- cbind(kronecker(seq(0, 1, length.out = m), rep(1, m)),
-              kronecker(rep(1, m), seq(0, 1, length.out = m)))
+geom <- cbind(
+  kronecker(seq(0, 1, length.out = m), rep(1, m)),
+  kronecker(rep(1, m), seq(0, 1, length.out = m))
+)
 ```
 Then we generate $100$ unknown locations on a $10 \times 10$ grid in the unit square and another $100$ unknown locations randomly in the unit square.
 ```{r generate unknown locations}
 nUnknown <- 100
-geomTmp <- geom[(geom[, 1] < 1 - 0.9 / (m - 1)) & 
-                  (geom[, 2] < 1 - 0.9 / (m - 1)), ]
-geomUnknownRnd <- geomTmp[sample(1 : (n - 2 * m + 1), nUnknown, F), ] + 
+geomTmp <- geom[(geom[, 1] < 1 - 0.9 / (m - 1)) &
+  (geom[, 2] < 1 - 0.9 / (m - 1)), ]
+geomUnknownRnd <- geomTmp[sample(1:(n - 2 * m + 1), nUnknown, F), ] +
   matrix(runif(nUnknown, 0.2 / m, 0.8 / m), nUnknown, 2)
-geomUnknownGrid <- cbind(kronecker(seq(0.21, 0.39, length.out = 10), rep(1, 10)),
-                     kronecker(rep(1, 10), seq(0.41, 0.59, length.out = 10)))
+geomUnknownGrid <- cbind(
+  kronecker(seq(0.21, 0.39, length.out = 10), rep(1, 10)),
+  kronecker(rep(1, 10), seq(0.41, 0.59, length.out = 10))
+)
 ```
 Define a function used for simulating Gaussian processes under the squared exponential kernel $\exp(- \| \mbox{diag}(\alpha_1, \alpha_2)(s_1 - s_2)\|^2)$ on the 2D plane.
 ```{r define the function for generating 2D GP}
-grf_gen <- function(geom, alpha)
-{
-  if(ncol(geom) != 2)
+grf_gen <- function(geom, alpha) {
+  if (ncol(geom) != 2) {
     stop("grf_gen: only works under 2D geometry")
-  if(min(geom) < 0 || max(geom) > 1)
+  }
+  if (min(geom) < 0 || max(geom) > 1) {
     warning("grf_gen: geom is not in the unit square")
+  }
   n <- nrow(geom)
   geom[, 1] <- geom[, 1] * alpha[1]
   geom[, 2] <- geom[, 2] * alpha[2]
   distM <- as.matrix(dist(geom))
-  covM <- exp(- distM^2)
+  covM <- exp(-distM^2)
   return(as.vector(mvtnorm::rmvnorm(1, sigma = covM)))
 }
 ```
@@ -58,58 +63,64 @@ alpha1 <- sqrt(30)
 alpha2 <- sqrt(30)
 alpha <- c(alpha1, alpha2)
 prTtl <- pnorm(grf_gen(rbind(geom, geomUnknownRnd, geomUnknownGrid), alpha))
-prUnknownRnd <- prTtl[(n + 1) : (n + nUnknown)]
-prUnknownGrid <- prTtl[(n + nUnknown + 1) : length(prTtl)]
+prUnknownRnd <- prTtl[(n + 1):(n + nUnknown)]
+prUnknownGrid <- prTtl[(n + nUnknown + 1):length(prTtl)]
 z <- matrix(prTtl, m, m)
 ```
 Heatmap with randomly distributed unknown locations.
 ```{r plot unknown locations that are randomly distributed}
-image.plot(seq(0,1,length.out=m),seq(0,1,length.out=m),z,col=colorRampPalette(brewer.pal(11,"RdBu")[11:1])(30),xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1, cex.axis = 0.9,legend.shrink = 0.8,legend.cex=2,legend.width = 2,mgp=c(2,1,0))
-points(x = geomUnknownRnd[, 1], y = geomUnknownRnd[, 2], col = "white", cex = 0.6, pch=21, bg="white")
+pdf("F1_1.pdf", width = 5.5, height = 4.5)
+image.plot(seq(0, 1, length.out = m), seq(0, 1, length.out = m), z, col = colorRampPalette(brewer.pal(11, "RdBu")[11:1])(30), xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1.3, cex.axis = 1.3, legend.shrink = 0.8, legend.cex = 2.5, legend.width = 2, mgp = c(2, 1, 0))
+points(x = geomUnknownRnd[, 1], y = geomUnknownRnd[, 2], col = "white", cex = 0.6, pch = 21, bg = "white")
+dev.off()
 ```
 Heatmap with unknown locations distributed on a grid.
 ```{r plot unknown locations on a grid}
-image.plot(seq(0,1,length.out=m),seq(0,1,length.out=m),z,col=colorRampPalette(brewer.pal(11,"RdBu")[11:1])(30),xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1, cex.axis = 0.9,legend.shrink = 0.8,legend.cex=2,legend.width = 2,mgp=c(2,1,0))
-points(x = geomUnknownGrid[, 1], y = geomUnknownGrid[, 2], col = "white", cex = 0.6, pch=21, bg="white")
+pdf("F1_2.pdf", width = 5.5, height = 4.5)
+image.plot(seq(0, 1, length.out = m), seq(0, 1, length.out = m), z, col = colorRampPalette(brewer.pal(11, "RdBu")[11:1])(30), xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1.3, cex.axis = 1.3, legend.shrink = 0.8, legend.cex = 2.5, legend.width = 2, mgp = c(2, 1, 0))
+points(x = geomUnknownGrid[, 1], y = geomUnknownGrid[, 2], col = "white", cex = 0.6, pch = 21, bg = "white")
+dev.off()
 ```
 
 ## Estimate model parameters with TN and TLR
 First simulate the binary reponses at all locations.
 ```{r generate binary results}
 yTtl <- rbinom(n = n + 200, size = 1, prob = prTtl)
-y <- yTtl[1 : n]
+y <- yTtl[1:n]
 ```
 Two functions for computing the marginal probabilities used in point-estimating the model parameters, one based on `tlrmvnmvt` package, the other based on `TruncatedNormal` package.
 ```{r likelihood functions with TLR and TN}
-mle_func_TLR <- function(alpha, geom, y)
-{
+mle_func_TLR <- function(alpha, geom, y) {
   n <- nrow(geom)
   xi <- rep(0, n)
   geom[, 1] <- geom[, 1] * alpha[1]
   geom[, 2] <- geom[, 2] * alpha[2]
   distM <- as.matrix(dist(geom))
-  covM <- exp(- distM^2)
+  covM <- exp(-distM^2)
   xi <- (2 * y - 1) * xi
   covM <- outer(2 * y - 1, 2 * y - 1) * covM
   diag(covM) <- diag(covM) + 1
-  ret <- tlrmvnmvt::pmvn(lower = rep(-Inf, n), upper = xi, sigma = covM, uselog2 = T, N = 998, 
-                             algorithm = TLRQMC(m = round(sqrt(nrow(covM))), epsl = 1e-4))
+  ret <- tlrmvnmvt::pmvn(
+    lower = rep(-Inf, n), upper = xi, sigma = covM, uselog2 = T, N = 998,
+    algorithm = TLRQMC(m = round(sqrt(nrow(covM))), epsl = 1e-4)
+  )
   cat("TLR: ", alpha, " -- ", ret, "\n")
   return(ret)
 }
-mle_func_TN <- function(alpha, geom, y)
-{
+mle_func_TN <- function(alpha, geom, y) {
   n <- nrow(geom)
   xi <- rep(0, n)
   geom[, 1] <- geom[, 1] * alpha[1]
   geom[, 2] <- geom[, 2] * alpha[2]
   distM <- as.matrix(dist(geom))
-  covM <- exp(- distM^2)
+  covM <- exp(-distM^2)
   xi <- (2 * y - 1) * xi
   covM <- outer(2 * y - 1, 2 * y - 1) * covM
   diag(covM) <- diag(covM) + 1
-  ret <- TruncatedNormal::pmvnorm(mu = rep(0, length(xi)), sigma = covM, 
-                                  log = TRUE, ub = xi)[[1]]
+  ret <- TruncatedNormal::pmvnorm(
+    mu = rep(0, length(xi)), sigma = covM,
+    log = TRUE, ub = xi
+  )[[1]]
   cat("TN: ", alpha, " -- ", ret, "\n")
   return(ret)
 }
@@ -153,9 +164,9 @@ geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTLR[1]
 geomSub[, 2] <- geomSub[, 2] * alphaTLR[2]
 covM <- matrix(0, nSub + 1, nSub + 1)
-covM[1 : nSub, 1 : nSub] <- exp(- (as.matrix(dist(geomSub)))^2)
-covM[1 : nSub, 1 : nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1 : nSub, 1 : nSub]
-diag(covM[1 : nSub, 1 : nSub]) <- diag(covM[1 : nSub, 1 : nSub]) + 1
+covM[1:nSub, 1:nSub] <- exp(-(as.matrix(dist(geomSub)))^2)
+covM[1:nSub, 1:nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1:nSub, 1:nSub]
+diag(covM[1:nSub, 1:nSub]) <- diag(covM[1:nSub, 1:nSub]) + 1
 covM[nSub + 1, nSub + 1] <- 2
 ```
 Now we come to the estimation at each unknown location.
@@ -163,37 +174,43 @@ Now we come to the estimation at each unknown location.
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
 startTime <- Sys.time()
-for(i in 1 : nrow(geomUnknownRnd))
+for (i in 1:nrow(geomUnknownRnd))
 {
   geomTmp <- geomSub
   geomTmp[, 1] <- geomTmp[, 1] - geomUnknownRnd[i, 1] * alphaTLR[1]
   geomTmp[, 2] <- geomTmp[, 2] - geomUnknownRnd[i, 2] * alphaTLR[2]
-  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
-  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
-  predRnd[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
-                                           N = 998, epsl = 1e-4)[[1]]
+  covM[nSub + 1, 1:nSub] <- (2 * ySub - 1) * exp(-rowSums(geomTmp^2))
+  covM[1:nSub, nSub + 1] <- covM[nSub + 1, 1:nSub]
+  predRnd[i] <- tlrmvnratio::mvn.ratio.tlr(
+    upper = 0, sigma = covM, m = mSub,
+    N = 998, epsl = 1e-4
+  )[[1]]
 }
-for(i in 1 : nrow(geomUnknownGrid))
+for (i in 1:nrow(geomUnknownGrid))
 {
   geomTmp <- geomSub
   geomTmp[, 1] <- geomTmp[, 1] - geomUnknownGrid[i, 1] * alphaTLR[1]
   geomTmp[, 2] <- geomTmp[, 2] - geomUnknownGrid[i, 2] * alphaTLR[2]
-  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
-  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
-  predGrid[i] <- tlrmvnratio::mvn.ratio.tlr(upper = 0, sigma = covM, m = mSub, 
-                                            N = 998, epsl = 1e-4)[[1]]
+  covM[nSub + 1, 1:nSub] <- (2 * ySub - 1) * exp(-rowSums(geomTmp^2))
+  covM[1:nSub, nSub + 1] <- covM[nSub + 1, 1:nSub]
+  predGrid[i] <- tlrmvnratio::mvn.ratio.tlr(
+    upper = 0, sigma = covM, m = mSub,
+    N = 998, epsl = 1e-4
+  )[[1]]
 }
 endTime <- Sys.time()
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
-aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
-MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
-aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
-MSEGrid <- sum((prTtl[(n + 101) : (n + 200)] - predGrid)^2) / 100
-cat("Time[seconds]:", timeCost, "\n",
-    "MSE[random]", MSERnd, "\n",
-    "MSE[grid]", MSEGrid, "\n",
-    "AUC[random]:", aucRnd, "\n",
-    "AUC[grid]:", aucGrid, "\n")
+aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
+MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
+aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101):(n + 200)], predGrid, auc = T, plot = F)$auc)
+MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
+cat(
+  "Time[seconds]:", timeCost, "\n",
+  "MSE[random]", MSERnd, "\n",
+  "MSE[grid]", MSEGrid, "\n",
+  "AUC[random]:", aucRnd, "\n",
+  "AUC[grid]:", aucGrid, "\n"
+)
 ```
 Now we will prediction at each location by separately computing the numerator and the denominator of Equation~(6) with the `TruncatedNormal` package.
 ```{r pred with TruncatedNormal}
@@ -201,52 +218,60 @@ geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTN[1]
 geomSub[, 2] <- geomSub[, 2] * alphaTN[2]
 covM <- matrix(0, nSub + 1, nSub + 1)
-covM[1 : nSub, 1 : nSub] <- exp(- (as.matrix(dist(geomSub)))^2)
-covM[1 : nSub, 1 : nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1 : nSub, 1 : nSub]
-diag(covM[1 : nSub, 1 : nSub]) <- diag(covM[1 : nSub, 1 : nSub]) + 1
+covM[1:nSub, 1:nSub] <- exp(-(as.matrix(dist(geomSub)))^2)
+covM[1:nSub, 1:nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1:nSub, 1:nSub]
+diag(covM[1:nSub, 1:nSub]) <- diag(covM[1:nSub, 1:nSub]) + 1
 covM[nSub + 1, nSub + 1] <- 2
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
 startTime <- Sys.time()
-denormTN <- TruncatedNormal::pmvnorm(mu = rep(0, nSub), 
-                                     sigma = covM[1 : nSub, 1 : nSub], 
-                                     lb = rep(-Inf, nSub),
-                                     ub = rep(0, nSub))[[1]]
-for(i in 1 : nrow(geomUnknownRnd))
+denormTN <- TruncatedNormal::pmvnorm(
+  mu = rep(0, nSub),
+  sigma = covM[1:nSub, 1:nSub],
+  lb = rep(-Inf, nSub),
+  ub = rep(0, nSub)
+)[[1]]
+for (i in 1:nrow(geomUnknownRnd))
 {
   geomTmp <- geomSub
   geomTmp[, 1] <- geomTmp[, 1] - geomUnknownRnd[i, 1] * alphaTN[1]
   geomTmp[, 2] <- geomTmp[, 2] - geomUnknownRnd[i, 2] * alphaTN[2]
-  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
-  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
-  predRnd[i] <- TruncatedNormal::pmvnorm(mu = rep(0, nSub + 1), 
-                                         sigma = covM, 
-                                         lb = rep(-Inf, nSub + 1),
-                                         ub = rep(0, nSub + 1))[[1]] / denormTN
+  covM[nSub + 1, 1:nSub] <- (2 * ySub - 1) * exp(-rowSums(geomTmp^2))
+  covM[1:nSub, nSub + 1] <- covM[nSub + 1, 1:nSub]
+  predRnd[i] <- TruncatedNormal::pmvnorm(
+    mu = rep(0, nSub + 1),
+    sigma = covM,
+    lb = rep(-Inf, nSub + 1),
+    ub = rep(0, nSub + 1)
+  )[[1]] / denormTN
 }
-for(i in 1 : nrow(geomUnknownGrid))
+for (i in 1:nrow(geomUnknownGrid))
 {
   geomTmp <- geomSub
   geomTmp[, 1] <- geomTmp[, 1] - geomUnknownGrid[i, 1] * alphaTN[1]
   geomTmp[, 2] <- geomTmp[, 2] - geomUnknownGrid[i, 2] * alphaTN[2]
-  covM[nSub + 1, 1 : nSub] <- (2 * ySub - 1) * exp(- rowSums(geomTmp^2))
-  covM[1 : nSub, nSub + 1] <- covM[nSub + 1, 1 : nSub]
-  predGrid[i] <- TruncatedNormal::pmvnorm(mu = rep(0, nSub + 1), 
-                                         sigma = covM, 
-                                         lb = rep(-Inf, nSub + 1),
-                                         ub = rep(0, nSub + 1))[[1]] / denormTN
+  covM[nSub + 1, 1:nSub] <- (2 * ySub - 1) * exp(-rowSums(geomTmp^2))
+  covM[1:nSub, nSub + 1] <- covM[nSub + 1, 1:nSub]
+  predGrid[i] <- TruncatedNormal::pmvnorm(
+    mu = rep(0, nSub + 1),
+    sigma = covM,
+    lb = rep(-Inf, nSub + 1),
+    ub = rep(0, nSub + 1)
+  )[[1]] / denormTN
 }
 endTime <- Sys.time()
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
-aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
-MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
-aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
-MSEGrid <- sum((prTtl[(n + 101) : (n + 200)] - predGrid)^2) / 100
-cat("Time[seconds]:", timeCost, "\n",
-    "MSE[random]", MSERnd, "\n",
-    "MSE[grid]", MSEGrid, "\n",
-    "AUC[random]:", aucRnd, "\n",
-    "AUC[grid]:", aucGrid, "\n")
+aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
+MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
+aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101):(n + 200)], predGrid, auc = T, plot = F)$auc)
+MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
+cat(
+  "Time[seconds]:", timeCost, "\n",
+  "MSE[random]", MSERnd, "\n",
+  "MSE[grid]", MSEGrid, "\n",
+  "AUC[random]:", aucRnd, "\n",
+  "AUC[grid]:", aucGrid, "\n"
+)
 ```
 Lastly, we perform the prediction with `rstan`. Let's write out our probit Gaussian process using the STAN language.
 ```{r probmodel in STAN}
@@ -274,47 +299,58 @@ mu <- rep(0, nSub)
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alpha[1]
 geomSub[, 2] <- geomSub[, 2] * alpha[2]
-covM <- exp(- (as.matrix(dist(geomSub)))^2)
+covM <- exp(-(as.matrix(dist(geomSub)))^2)
 diag(covM) <- diag(covM) + 1e-2
 ```
 Notice that we also add a nugget effect to the diagonal entries to avoid singularity. With the defined parameters, we can call STAN to simulate the posterior samples of `g`. 
 ```{r posterior simulation with STAN}
 startTime <- Sys.time()
 parmsSTAN <- list(N = length(ySub), Y = ySub, mu = mu, Omega = covM)
-HMCSamples <- stan(model_code = probmodel, data = parmsSTAN, 
-                    iter = 20000, warmup = 10000, chains = 1, init="0",
-                    algorithm="NUTS", seed=123)
+HMCSamples <- stan(
+  model_code = probmodel, data = parmsSTAN,
+  iter = 20000, warmup = 10000, chains = 1, init = "0",
+  algorithm = "NUTS", seed = 123
+)
 timeHMC <- get_elapsed_time(HMCSamples)[1] + get_elapsed_time(HMCSamples)[2]
 gHMC <- t(extract(HMCSamples)$g)
 ```
 `gHMC` stores the simulation of the posterior distribution of `g`, which is achieved by the Hamilton Monte Carlo method. For each replicate, we perform ordinary kriging at the unknown locations.
 ```{r kriging at unknown locations}
 geomUnknown <- rbind(geomUnknownRnd, geomUnknownGrid)
-gUnknown <- apply(X = gHMC, MARGIN = 2, 
-      FUN = function(v){krige.conv(data = v, 
-                                   coords = geom[idx2D, , drop = F],
-                                   locations = geomUnknown, 
-                                   krige = krige.control(
-                                     cov.model = "powered.exponential", 
-                                     cov.pars = c(1, 1 / alpha[1]),
-                                     kappa = 2, nugget = 0))$predict})
+gUnknown <- apply(
+  X = gHMC, MARGIN = 2,
+  FUN = function(v) {
+    krige.conv(
+      data = v,
+      coords = geom[idx2D, , drop = F],
+      locations = geomUnknown,
+      krige = krige.control(
+        cov.model = "powered.exponential",
+        cov.pars = c(1, 1 / alpha[1]),
+        kappa = 2, nugget = 0
+      )
+    )$predict
+  }
+)
 endTime <- Sys.time()
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 ```
 Compute the probit response function and then take the average as the probability estimation at unknown locations, based on which the MSE and AUC are computed.
 ```{r predict prob by STAN}
 pred <- rowMeans(pnorm(gUnknown))
-predRnd <- pred[1 : 100]
-predGrid <- pred[101 : 200]
-aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1) : (n + 100)], predRnd, auc = T, plot = F)$auc)
-MSERnd <- sum((prTtl[(n + 1) : (n + 100)] - predRnd)^2) / 100
-aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101) : (n + 200)], predGrid, auc = T, plot = F)$auc)
-MSEGrid <- sum((prTtl[(n + 101) : (n + 200)] - predGrid)^2) / 100
-cat("Time[seconds]:", timeCost, "\n",
-    "MSE[random]", MSERnd, "\n",
-    "MSE[grid]", MSEGrid, "\n",
-    "AUC[random]:", aucRnd, "\n",
-    "AUC[grid]:", aucGrid, "\n")
+predRnd <- pred[1:100]
+predGrid <- pred[101:200]
+aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
+MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
+aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101):(n + 200)], predGrid, auc = T, plot = F)$auc)
+MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
+cat(
+  "Time[seconds]:", timeCost, "\n",
+  "MSE[random]", MSERnd, "\n",
+  "MSE[grid]", MSEGrid, "\n",
+  "AUC[random]:", aucRnd, "\n",
+  "AUC[grid]:", aucGrid, "\n"
+)
 ```
 
 
