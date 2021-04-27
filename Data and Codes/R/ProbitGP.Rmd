@@ -30,6 +30,7 @@ geom <- cbind(
 ```
 Then we generate $100$ unknown locations on a $10 \times 10$ grid in the unit square and another $100$ unknown locations randomly in the unit square.
 ```{r generate unknown locations}
+set.seed(123)
 nUnknown <- 100
 geomTmp <- geom[(geom[, 1] < 1 - 0.9 / (m - 1)) &
   (geom[, 2] < 1 - 0.9 / (m - 1)), ]
@@ -59,6 +60,7 @@ grf_gen <- function(geom, alpha) {
 ```
 Simulate the probabilities at both known and unknown locations, with which we draw a 2D heatmap.
 ```{r generate the probabilities at known and unknown locations}
+set.seed(123)
 alpha1 <- sqrt(30)
 alpha2 <- sqrt(30)
 alpha <- c(alpha1, alpha2)
@@ -85,6 +87,7 @@ dev.off()
 ## Estimate model parameters with TN and TLR
 First simulate the binary reponses at all locations.
 ```{r generate binary results}
+set.seed(123)
 yTtl <- rbinom(n = n + 200, size = 1, prob = prTtl)
 y <- yTtl[1:n]
 ```
@@ -132,18 +135,20 @@ alphaPool <- cbind(kronecker(alphaVec, rep(1, length(alphaVec))), kronecker(rep(
 ```
 Select a sub-grid for parameter estimation.
 ```{r select a sub-grid for estimation and prediction}
-mSub <- 50
+mSub <- 15
 nSub <- mSub^2
 idx1D <- round(seq(1, m, length.out = mSub))
 idx2D <- c(kronecker(idx1D - 1, rep(m, mSub)) + idx1D)
 ```
 Point search using `mle_func_TLR`.
 ```{r likelihood TLR}
+set.seed(123)
 lkVecTLR <- apply(alphaPool, 1, mle_func_TLR, geom = geom[idx2D, ], y = yTtl[idx2D])
 alphaTLR <- alphaPool[which.max(lkVecTLR), ]
 ```
 Point search using `mle_func_TLR`.
 ```{r likelihood TN, warning=F}
+set.seed(123)
 lkVecTN <- apply(alphaPool, 1, mle_func_TN, geom = geom[idx2D, ], y = yTtl[idx2D])
 alphaTN <- alphaPool[which.max(lkVecTN), ]
 ```
@@ -171,6 +176,7 @@ covM[nSub + 1, nSub + 1] <- 2
 ```
 Now we come to the estimation at each unknown location.
 ```{r predict with tlrmvnratio}
+set.seed(123)
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
 startTime <- Sys.time()
@@ -214,6 +220,7 @@ cat(
 ```
 Now we will prediction at each location by separately computing the numerator and the denominator of Equation~(6) with the `TruncatedNormal` package.
 ```{r pred with TruncatedNormal}
+set.seed(123)
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTN[1]
 geomSub[, 2] <- geomSub[, 2] * alphaTN[2]
