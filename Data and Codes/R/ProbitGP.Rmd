@@ -207,7 +207,7 @@ for (i in 1:nrow(geomUnknownGrid))
   )[[1]]
 }
 # endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
 aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101):(n + 200)], predGrid, auc = T, plot = F)$auc)
@@ -271,7 +271,7 @@ for (i in 1:nrow(geomUnknownGrid))
   )[[1]] / denormTN
 }
 # endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
 aucGrid <- as.numeric(pROC::roc(yTtl[(n + 101):(n + 200)], predGrid, auc = T, plot = F)$auc)
@@ -361,7 +361,7 @@ gUnknown <- apply(
   }
 )
 # endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 ```
 Compute the probit response function and then take the average as the probability estimation at unknown locations, based on which the MSE and AUC are computed.
 ```{r predict prob by STAN}
