@@ -191,6 +191,8 @@ for (i in 1:nrow(geomUnknownRnd))
     upper = 0, sigma = covM, m = mSub,
     N = 998, epsl = 1e-4
   )[[1]]
+  if(i == 1)
+    endTime <- Sys.time()
 }
 for (i in 1:nrow(geomUnknownGrid))
 {
@@ -204,7 +206,7 @@ for (i in 1:nrow(geomUnknownGrid))
     N = 998, epsl = 1e-4
   )[[1]]
 }
-endTime <- Sys.time()
+# endTime <- Sys.time()
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
@@ -251,6 +253,8 @@ for (i in 1:nrow(geomUnknownRnd))
     lb = rep(-Inf, nSub + 1),
     ub = rep(0, nSub + 1)
   )[[1]] / denormTN
+  if(i == 1)
+    endTime <- Sys.time()
 }
 for (i in 1:nrow(geomUnknownGrid))
 {
@@ -266,7 +270,7 @@ for (i in 1:nrow(geomUnknownGrid))
     ub = rep(0, nSub + 1)
   )[[1]] / denormTN
 }
-endTime <- Sys.time()
+# endTime <- Sys.time()
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 aucRnd <- as.numeric(pROC::roc(yTtl[(n + 1):(n + 100)], predRnd, auc = T, plot = F)$auc)
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
@@ -324,6 +328,23 @@ gHMC <- t(extract(HMCSamples)$g)
 `gHMC` stores the simulation of the posterior distribution of `g`, which is achieved by the Hamilton Monte Carlo method. For each replicate, we perform ordinary kriging at the unknown locations.
 ```{r kriging at unknown locations}
 geomUnknown <- rbind(geomUnknownRnd, geomUnknownGrid)
+# find the time for prediction at one location
+gUnknown <- apply(
+  X = gHMC, MARGIN = 2,
+  FUN = function(v) {
+    krige.conv(
+      data = v,
+      coords = geom[idx2D, , drop = F],
+      locations = geomUnknown[1, ],
+      krige = krige.control(
+        cov.model = "powered.exponential",
+        cov.pars = c(1, 1 / alpha[1]),
+        kappa = 2, nugget = 0
+      )
+    )$predict
+  }
+)
+endTime <- Sys.time()
 gUnknown <- apply(
   X = gHMC, MARGIN = 2,
   FUN = function(v) {
@@ -339,7 +360,7 @@ gUnknown <- apply(
     )$predict
   }
 )
-endTime <- Sys.time()
+# endTime <- Sys.time()
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs")) / 2
 ```
 Compute the probit response function and then take the average as the probability estimation at unknown locations, based on which the MSE and AUC are computed.
