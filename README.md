@@ -8,4 +8,4 @@ The documentation is organized in two main parts described below.
 
 - [`Tutorial.md`](https://github.com/danieledurante/PredProbitGP/blob/main/Tutorial.md). It contains a detailed tutorial on how to implement the methods and algorithms presented in the article. To accomplish this goal, we mainly focus on reproducing step-by-step the scenario `n=250` of the simulation study in the article (see Section 3).
 
-The analyses are performed with an **iMac (macOS Sierra, version 10.12.6),**, using a `R` version **3.6.1**. 
+The analyses are performed with an **iMac (macOS Sierra, version 10.12.6)**, using a `R` version **3.6.1**. 
