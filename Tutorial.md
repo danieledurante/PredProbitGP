@@ -270,7 +270,7 @@ set.seed(123)
 invOmZ <- pd.solve(Omega+diag(1,n_sub,n_sub))
 paramsVB <- getParamsVB(n=n_sub,y=ySub,invOmZ=invOmZ,tolerance=1e-3,maxIter=1e4)
 
-# sample the values from the optimal approximating univariate truncated normals required to compute eq. 13
+# sample the values from the optimal approximating univariate truncated normals required to compute eq. (13)
 nSample <- 20000
 muTN <- paramsVB$mu
 muTN[ySub==0] <- -muTN[ySub==0]
@@ -329,7 +329,7 @@ cat(
 **TN**
 
 ``` r
-# produce the covariance matrix Sigma at the numerator of (3) using the alpha values estimated under TN
+# produce the covariance matrix Sigma at the numerator of (4) using the alpha values estimated under TN
 set.seed(123)
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTN[1]
@@ -344,7 +344,7 @@ covM[nSub + 1, nSub + 1] <- 2
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
 
-# compute the denominator of (3), which is common to all predictions, via TN  
+# compute the denominator of (4), which is common to all predictions, via TN  
 startTime <- Sys.time()
 denormTN <- TruncatedNormal::pmvnorm(
   mu = rep(0, nSub),
