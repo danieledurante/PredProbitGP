@@ -4,7 +4,7 @@ This tutorial contains guidelines and code to perform the analyses for the scena
 
 Simulate the data 
 ================
-To start the analysis open `R` and **set the working directory** where the files `tlrmvnratio.tar.gz` and `functionsVariational.R` are located. Once this has been done, **clean the workspace, and load the data along with useful** `R` **packages**.
+To start the analysis open `R` and **set the working directory** where the files `tlrmvnratio.tar.gz` and `functionsVariational.R` are located. Once this has been done, **clean the workspace and load the useful** `R` **packages**.
 
 ``` r
 library(mvtnorm)
