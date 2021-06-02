@@ -443,8 +443,10 @@ gHMC <- t(extract(HMCSamples)$g)
 #              Hence, load this library only after TLR, VB and TN have been implementeed.
 library(geoR)
 
+# create the empty vector of predictive probabilities at random and grid test locations  
 geomUnknown <- rbind(geomUnknownRnd, geomUnknownGrid)
-# find the time for prediction at one location
+
+# compute predictive probabilities at the firt location via ordinary kriging applied to the STAN samples and save runtime
 gUnknown <- apply(
   X = gHMC, MARGIN = 2,
   FUN = function(v) {
@@ -461,6 +463,8 @@ gUnknown <- apply(
   }
 )
 endTime <- Sys.time()
+
+# compute predictive probabilities at the remaining random and grid locations via ordinary kriging applied to the STAN samples
 gUnknown <- apply(
   X = gHMC, MARGIN = 2,
   FUN = function(v) {
@@ -476,11 +480,13 @@ gUnknown <- apply(
     )$predict
   }
 )
-# endTime <- Sys.time()
-timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
+
 pred <- rowMeans(pnorm(gUnknown))
 predRnd <- pred[1:100]
 predGrid <- pred[101:200]
+
+# compute and display the runtime and MSEs shown in Table 1 for STAN
+timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
 MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
 cat(
