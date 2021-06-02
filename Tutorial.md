@@ -38,11 +38,11 @@ nUnknown <- 100
 geomTmp <- geom[(geom[, 1] < 1 - 0.9 / (m - 1)) &
   (geom[, 2] < 1 - 0.9 / (m - 1)), ]
 
-# Random locations
+# random locations
 geomUnknownRnd <- geomTmp[sample(1:(n - 2 * m + 1), nUnknown, F), ] +
   matrix(runif(nUnknown, 0.2 / m, 0.8 / m), nUnknown, 2)
 
-# Grid locations
+# grid locations
 geomUnknownGrid <- cbind(
   kronecker(seq(0.21, 0.39, length.out = 10), rep(1, 10)),
   kronecker(rep(1, 10), seq(0.41, 0.59, length.out = 10))
@@ -84,11 +84,11 @@ z <- matrix(prTtl, m, m)
 To **visualize the output** as in Figure 2 of the article, execute the code below.
 
 ``` r
-# Random locations
+# random locations
 image.plot(seq(0, 1, length.out = m), seq(0, 1, length.out = m), z, col = colorRampPalette(brewer.pal(11, "RdBu")[11:1])(30), xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1.3, cex.axis = 1.3, legend.shrink = 0.8, legend.cex = 2.5, legend.width = 2, mgp = c(2, 1, 0))
 points(x = geomUnknownRnd[, 1], y = geomUnknownRnd[, 2], col = "white", cex = 0.6, pch = 21, bg = "white")
 
-# Grid locations
+# grid locations
 image.plot(seq(0, 1, length.out = m), seq(0, 1, length.out = m), z, col = colorRampPalette(brewer.pal(11, "RdBu")[11:1])(30), xlab = expression(x[1]), ylab = expression(x[2]), cex.lab = 1.3, cex.axis = 1.3, legend.shrink = 0.8, legend.cex = 2.5, legend.width = 2, mgp = c(2, 1, 0))
 points(x = geomUnknownGrid[, 1], y = geomUnknownGrid[, 2], col = "white", cex = 0.6, pch = 21, bg = "white")
 ```
@@ -265,7 +265,7 @@ diag(Omega) <- diag(Omega)+1e-10
 n_sub <- nrow(geomSub)
 
 # pre-compute the inverse of Sigma_z and run the CAVI part in Algorithm 2
-startTime = Sys.time()
+startTime <- Sys.time()
 set.seed(123)
 invOmZ <- pd.solve(Omega+diag(1,n_sub,n_sub))
 paramsVB <- getParamsVB(n=n_sub,y=ySub,invOmZ=invOmZ,tolerance=1e-3,maxIter=1e4)
@@ -329,6 +329,7 @@ cat(
 **TN**
 
 ``` r
+# produce the covariance matrix Sigma at the numerator of (3) using the alpha values estimated under TN
 set.seed(123)
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTN[1]
@@ -338,8 +339,12 @@ covM[1:nSub, 1:nSub] <- exp(-(as.matrix(dist(geomSub)))^2)
 covM[1:nSub, 1:nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1:nSub, 1:nSub]
 diag(covM[1:nSub, 1:nSub]) <- diag(covM[1:nSub, 1:nSub]) + 1
 covM[nSub + 1, nSub + 1] <- 2
+
+# create the empty vectors of predictive probabilities at random and grid test locations  
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
+
+# compute the denominator of (3), which is common to all predictions, via TN  
 startTime <- Sys.time()
 denormTN <- TruncatedNormal::pmvnorm(
   mu = rep(0, nSub),
@@ -347,6 +352,8 @@ denormTN <- TruncatedNormal::pmvnorm(
   lb = rep(-Inf, nSub),
   ub = rep(0, nSub)
 )[[1]]
+
+# compute predictive probabilities at the 100 random locations via TN and save runtime for first prediction
 for (i in 1:nrow(geomUnknownRnd))
 {
   geomTmp <- geomSub
@@ -363,6 +370,8 @@ for (i in 1:nrow(geomUnknownRnd))
   if(i == 1)
     endTime <- Sys.time()
 }
+
+# compute predictive probabilities at the 100 grid locations via TN
 for (i in 1:nrow(geomUnknownGrid))
 {
   geomTmp <- geomSub
@@ -377,7 +386,8 @@ for (i in 1:nrow(geomUnknownGrid))
     ub = rep(0, nSub + 1)
   )[[1]] / denormTN
 }
-# endTime <- Sys.time()
+
+# compute and display the runtime and MSEs shown in Table 1 for TN
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
 MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
@@ -391,10 +401,10 @@ cat(
 **STAN**
 
 ``` r
+# define the GP probit model using STAN 
 probmodel <- "
 data {
   int<lower=0> N;
-  
   int Y[N];
   vector[N] mu;
   matrix[N, N] Omega;
@@ -409,6 +419,7 @@ model {
 }
 "
 
+# define the mean and covariance matrix of the GP prior using the true values of alpha 
 mu <- rep(0, nSub)
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alpha[1]
@@ -416,6 +427,7 @@ geomSub[, 2] <- geomSub[, 2] * alpha[2]
 covM <- exp(-(as.matrix(dist(geomSub)))^2)
 diag(covM) <- diag(covM) + 1e-2
 
+# run MCMC algorithm based on STAN implementation to sample from the GP posterior 
 startTime <- Sys.time()
 parmsSTAN <- list(N = length(ySub), Y = ySub, mu = mu, Omega = covM)
 HMCSamples <- stan(
@@ -426,6 +438,9 @@ HMCSamples <- stan(
 timeHMC <- get_elapsed_time(HMCSamples)[1] + get_elapsed_time(HMCSamples)[2]
 gHMC <- t(extract(HMCSamples)$g)
 
+# load the "geoR" library to compute predictive probabilities from STAN samples via ordinary kriging
+# *IMPORTANT*: This library requires XCode, which conflicts with other libraries used for TLR, VB and TN. 
+#              Hence, load this library only after TLR, VB and TN have been implementeed.
 library(geoR)
 
 geomUnknown <- rbind(geomUnknownRnd, geomUnknownGrid)
