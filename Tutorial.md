@@ -68,7 +68,7 @@ grf_gen <- function(geom, alpha) {
 }
 ```
 
-Leveraging the above function, we can **simulate the GP realizations at both training and test locations**, and then **transform theses values into the probabilities using the probit link**, as described in Section 3 of the article.
+Leveraging the above function, we can **simulate the GP realizations at both training and test locations**, and then **transform these values into the probabilities using the probit link**, as described in Section 3 of the article.
 
 ``` r
 set.seed(123)
