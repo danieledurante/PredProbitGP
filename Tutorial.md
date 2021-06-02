@@ -183,7 +183,7 @@ Here, we **compute the predictive probabilities at the grid and random test loca
   - The **TN** strategy based on the calculation of the numerator and the denominator in eq (4) via [Botev (2017)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/rssb.12162) (requires `TruncatedNormal`)
   - The Monte Carlo strategy which evaluates predictive probabilities via **STAN** samples from the exact GP posterior (requires `rstan`)
 
-The **step-by-step code** to implement the above methods and produce the output in Table 1 for the scenario `n = 250` is provided below.
+The **step-by-step code** to implement the above methods and produce the output in **Table 1** for the scenario `n = 250` is provided below.
 
 **TLR**
 
