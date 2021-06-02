@@ -188,8 +188,10 @@ The **step-by-step code** to implement the above methods and produce the output 
 **TLR**
 
 ```r
+# install the tlrmvnratio package. *IMPORTANT*: installation requires "gfortran" for a successful execution
 install.packages("tlrmvnratio.tar.gz", repos = NULL, method = "source")
 
+# define the n = 250 training responses and produce the covariance matrix Sigma defined in Algorithm 1
 ySub <- yTtl[idx2D]
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTLR[1]
@@ -200,10 +202,12 @@ covM[1:nSub, 1:nSub] <- outer(2 * ySub - 1, 2 * ySub - 1) * covM[1:nSub, 1:nSub]
 diag(covM[1:nSub, 1:nSub]) <- diag(covM[1:nSub, 1:nSub]) + 1
 covM[nSub + 1, nSub + 1] <- 2
 
-
+# create the empty vectors of predictive probabilities at random and grid test locations  
 set.seed(123)
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 predGrid <- rep(NA, nrow(geomUnknownGrid))
+
+# compute predictive probabilities at the 100 random locations via TLR and save runtime for first prediction
 startTime <- Sys.time()
 for (i in 1:nrow(geomUnknownRnd))
 {
@@ -219,6 +223,8 @@ for (i in 1:nrow(geomUnknownRnd))
   if(i == 1)
     endTime <- Sys.time()
 }
+
+# compute predictive probabilities at the 100 grid locations via TLR
 for (i in 1:nrow(geomUnknownGrid))
 {
   geomTmp <- geomSub
@@ -231,7 +237,8 @@ for (i in 1:nrow(geomUnknownGrid))
     N = 998, epsl = 1e-4
   )[[1]]
 }
-# endTime <- Sys.time()
+
+# compute and display the runtime and MSEs shown in Table 1 for TLR
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
 MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
@@ -245,29 +252,38 @@ cat(
 **VB**
 
 ``` r
+# load the source code for implementing the VB method
 source("functionsVariational.R")
+
+# define the GP covariance matrix Omega with alpha as estimated via TLR
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTLR[1]
 geomSub[, 2] <- geomSub[, 2] * alphaTLR[2]
 Omega <- exp(-(as.matrix(dist(geomSub,diag=TRUE,upper=TRUE)))^2)
-diag(Omega)<-diag(Omega)+1e-10
+# NOTE: we add a small nugget effect only for numerical reasons to avoid singularity
+diag(Omega) <- diag(Omega)+1e-10
 n_sub <- nrow(geomSub)
 
+# pre-compute the inverse of Sigma_z and run the CAVI part in Algorithm 2
 startTime = Sys.time()
 set.seed(123)
 invOmZ <- pd.solve(Omega+diag(1,n_sub,n_sub))
 paramsVB <- getParamsVB(n=n_sub,y=ySub,invOmZ=invOmZ,tolerance=1e-3,maxIter=1e4)
+
+# sample the values from the optimal approximating univariate truncated normals required to compute eq. 13
 nSample <- 20000
 muTN <- paramsVB$mu
 muTN[ySub==0] <- -muTN[ySub==0]
 sigmaTN <- paramsVB$sigma
-
 set.seed(123)
 sampleTruncNorm <- matrix(rtruncnorm(n_sub*nSample, a = 0, b = Inf, mean = muTN, sd = sigmaTN), nrow = n_sub, ncol = nSample, byrow = F ) 
 sampleTruncNorm[ySub==0,] = -sampleTruncNorm[ySub==0,] 
 
+# pre-compute the inverse of Omega required to compute predictive probabilities at generic locations
 invOmega <- pd.solve(Omega)
 omega_new <- 1
+
+# compute predictive probabilities at the 100 random locations via VB and save runtime for first prediction
 predRnd <- rep(NA, nrow(geomUnknownRnd))
 geomTmpRnd <- matrix(NA,nrow(geomUnknownRnd),2)
 for (i in 1:nrow(geomUnknownRnd))
@@ -283,6 +299,8 @@ for (i in 1:nrow(geomUnknownRnd))
 	if(i == 1)
     	endTime <- Sys.time()
 }
+
+# compute predictive probabilities at the 100 grid locations via VB
 predGrid <- rep(NA, nrow(geomUnknownGrid))
 geomTmpGrid <- matrix(NA,nrow(geomUnknownGrid),2)
 for (i in 1:nrow(geomUnknownGrid))
@@ -296,6 +314,8 @@ for (i in 1:nrow(geomUnknownGrid))
 	pred_mean <- H_Sigma%*%sampleTruncNorm	
 	predGrid[i] <- mean(pnorm(c(pred_mean),0,sd=sqrt(pred_variance)))
 }
+
+# compute and display the runtime and MSEs shown in Table 1 for VB
 timeCost <- as.numeric(difftime(endTime, startTime, units = "secs"))
 MSERnd <- sum((prTtl[(n + 1):(n + 100)] - predRnd)^2) / 100
 MSEGrid <- sum((prTtl[(n + 101):(n + 200)] - predGrid)^2) / 100
