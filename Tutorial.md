@@ -288,16 +288,16 @@ predRnd <- rep(NA, nrow(geomUnknownRnd))
 geomTmpRnd <- matrix(NA,nrow(geomUnknownRnd),2)
 for (i in 1:nrow(geomUnknownRnd))
 {
-	geomTmpRnd[i, 1] <- geomUnknownRnd[i, 1] * alphaTLR[1]	
-	geomTmpRnd[i, 2] <- geomUnknownRnd[i, 2] * alphaTLR[2]	
-	omega_new_marg <- matrix(exp(-apply((t(geomSub)-geomTmpRnd[i,])^2,2,sum)),n_sub,1)
-	H_x <- crossprod(omega_new_marg,invOmega)
-	H_Sigma <- crossprod(omega_new_marg,invOmZ)
-	pred_variance <- 1+omega_new-H_x%*%omega_new_marg+H_Sigma%*%t(H_x)
-	pred_mean <- H_Sigma%*%sampleTruncNorm	
-	predRnd[i] <- mean(pnorm(c(pred_mean),0,sd=sqrt(pred_variance)))
-	if(i == 1)
-    	endTime <- Sys.time()
+  geomTmpRnd[i, 1] <- geomUnknownRnd[i, 1] * alphaTLR[1]	
+  geomTmpRnd[i, 2] <- geomUnknownRnd[i, 2] * alphaTLR[2]	
+  omega_new_marg <- matrix(exp(-apply((t(geomSub)-geomTmpRnd[i,])^2,2,sum)),n_sub,1)
+  H_x <- crossprod(omega_new_marg,invOmega)
+  H_Sigma <- crossprod(omega_new_marg,invOmZ)
+  pred_variance <- 1+omega_new-H_x%*%omega_new_marg+H_Sigma%*%t(H_x)
+  pred_mean <- H_Sigma%*%sampleTruncNorm	
+  predRnd[i] <- mean(pnorm(c(pred_mean),0,sd=sqrt(pred_variance)))
+    if(i == 1)
+     endTime <- Sys.time()
 }
 
 # compute predictive probabilities at the 100 grid locations via VB
@@ -305,14 +305,14 @@ predGrid <- rep(NA, nrow(geomUnknownGrid))
 geomTmpGrid <- matrix(NA,nrow(geomUnknownGrid),2)
 for (i in 1:nrow(geomUnknownGrid))
 {
-	geomTmpGrid[i, 1] <- geomUnknownGrid[i, 1] * alphaTLR[1]	
-	geomTmpGrid[i, 2] <- geomUnknownGrid[i, 2] * alphaTLR[2]	
-	omega_new_marg <- matrix(exp(-apply((t(geomSub)-geomTmpGrid[i,])^2,2,sum)),n_sub,1)
-	H_x <- crossprod(omega_new_marg,invOmega)
-	H_Sigma <- crossprod(omega_new_marg,invOmZ)
-	pred_variance <- 1+omega_new-H_x%*%omega_new_marg+H_Sigma%*%t(H_x)
-	pred_mean <- H_Sigma%*%sampleTruncNorm	
-	predGrid[i] <- mean(pnorm(c(pred_mean),0,sd=sqrt(pred_variance)))
+  geomTmpGrid[i, 1] <- geomUnknownGrid[i, 1] * alphaTLR[1]	
+  geomTmpGrid[i, 2] <- geomUnknownGrid[i, 2] * alphaTLR[2]	
+  omega_new_marg <- matrix(exp(-apply((t(geomSub)-geomTmpGrid[i,])^2,2,sum)),n_sub,1)
+  H_x <- crossprod(omega_new_marg,invOmega)
+  H_Sigma <- crossprod(omega_new_marg,invOmZ)
+  pred_variance <- 1+omega_new-H_x%*%omega_new_marg+H_Sigma%*%t(H_x)
+  pred_mean <- H_Sigma%*%sampleTruncNorm	
+  predGrid[i] <- mean(pnorm(c(pred_mean),0,sd=sqrt(pred_variance)))
 }
 
 # compute and display the runtime and MSEs shown in Table 1 for VB
@@ -425,6 +425,7 @@ geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alpha[1]
 geomSub[, 2] <- geomSub[, 2] * alpha[2]
 covM <- exp(-(as.matrix(dist(geomSub)))^2)
+# NOTE: we add a small nugget effect only for numerical reasons to avoid singularity
 diag(covM) <- diag(covM) + 1e-2
 
 # run MCMC algorithm based on STAN implementation to sample from the GP posterior 
