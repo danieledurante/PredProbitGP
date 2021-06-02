@@ -49,7 +49,7 @@ geomUnknownGrid <- cbind(
 )
 ```
 
-To generate the binary responses at the locations defined above, we first need to **simulate the realizations of the Gaussian process (GP) with mean function and covariance kernel defined in Section 3 of the article**. Let us first define a function (`grf_gen`) that performs this task.
+To generate the binary responses at the locations defined above, we first need to **simulate the realizations of the Gaussian process (GP) with mean function and covariance kernel defined in Section 3 of the article**. Let us first build a function (`grf_gen`) to perform this task.
 
 ``` r
 grf_gen <- function(geom, alpha) {
