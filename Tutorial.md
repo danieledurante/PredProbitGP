@@ -30,7 +30,7 @@ geom <- cbind(
 )
 ```
 
-Once this has been done, we produce `100` unknown locations on a 10 × 10 **grid in the unit square**, and another `100` unknown locations **randomly distributed in the unit square**. These locations are those on which the **out-of-sample test performance** of the different methods will be evaluated.
+Once this has been done, we produce `100` locations on a 10 × 10 **grid in the unit square**, and another `100` **randomly distributed in the unit square**. These locations are required to assess **out-of-sample test performance** of the different methods under analysis.
 
 ```r
 set.seed(123)
