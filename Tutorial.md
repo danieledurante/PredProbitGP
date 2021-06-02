@@ -1,6 +1,6 @@
 Description
 ================
-This tutorial contains guidelines and code to perform the analyses for the scenario `n = 250` in the simulation study of the article **scalable computation of predictive probabilities in probit models with Gaussian process priors**. In particular, you will find a detailed step-by-step guide and `R` code to **implement the methods under analysis** and to **reproduce the results in Table 1** for the scenario `n = 250` (Section 3). For implementation purposes, please **execute the code below considering the same order in which is presented**. 
+This tutorial contains guidelines and code to perform the analyses for the scenario `n = 225` in the simulation study of the article **scalable computation of predictive probabilities in probit models with Gaussian process priors**. In particular, you will find a detailed step-by-step guide and `R` code to **implement the methods under analysis** and to **reproduce the results in Table 1** for the scenario `n = 225` (Section 3). For implementation purposes, please **execute the code below considering the same order in which is presented**. 
 
 Simulate the data 
 ================
@@ -145,14 +145,14 @@ mle_func_TN <- function(alpha, geom, y) {
 }
 ```
 
-We now **define the grid of **`α`** values** for point-search, and **create the training sample for the scenario `n = 250`** by selecting a 15 × 15 sub-grid of equally-spaced configurations (along with their associated probability parameters and simulated responses) from the `10000` known locations previously simulated; see Section 3 in the article for additional details.
+We now **define the grid of **`α`** values** for point-search, and **create the training sample for the scenario `n = 225`** by selecting a 15 × 15 sub-grid of equally-spaced configurations (along with their associated probability parameters and simulated responses) from the `10000` known locations previously simulated; see Section 3 in the article for additional details.
 
 ``` r
 # alpha grid
 alphaVec <- sqrt(seq(15, 45, length.out = 10))
 alphaPool <- cbind(kronecker(alphaVec, rep(1, length(alphaVec))), kronecker(rep(1, length(alphaVec)), alphaVec))
 
-# indexes of the sub-grid for estimation and prediction in scenario n=250
+# indexes of the sub-grid for estimation and prediction in scenario n = 225
 # (change mSub to 25, 50 and 100 for testing the other scenarios in the simulations. 
 # NOTE: the runtime for these additional scenarios will be much higher)
 mSub <- 15
@@ -177,13 +177,13 @@ alphaTN <- alphaPool[which.max(lkVecTN), ]
 
 Computation of predictive probabilities
 ================
-Here, we **compute the predictive probabilities at the grid and random test locations** under the four methods discussed in Section 3 for the scenario with `n = 250` (i.e., the training data are those observed at the 15 × 15 grid specified previously). The methods evaluated, are:
+Here, we **compute the predictive probabilities at the grid and random test locations** under the four methods discussed in Section 3 for the scenario with `n = 225` (i.e., the training data are those observed at the 15 × 15 grid specified previously). The methods evaluated, are:
   - The **TLR** strategy proposed in Section 2.1 of the article (requires `tlrmvnratio`)
   - The variational (**VB**) strategy proposed in Section 2.2 of the article (requires `functionsVariational.R`)
   - The **TN** strategy based on the calculation of the numerator and the denominator in eq (4) via [Botev (2017)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/rssb.12162) (requires `TruncatedNormal`)
   - The Monte Carlo strategy which evaluates predictive probabilities via **STAN** samples from the exact GP posterior (requires `rstan`)
 
-The **step-by-step code** to implement the above methods and produce the output in **Table 1** for the scenario `n = 250` is provided below.
+The **step-by-step code** to implement the above methods and produce the output in **Table 1** for the scenario `n = 225` is provided below.
 
 **TLR**
 
@@ -191,7 +191,7 @@ The **step-by-step code** to implement the above methods and produce the output 
 # install the tlrmvnratio package. *IMPORTANT*: installation requires "gfortran" for a successful execution
 install.packages("tlrmvnratio.tar.gz", repos = NULL, method = "source")
 
-# define the n = 250 training responses and produce the covariance matrix Sigma defined in Algorithm 1
+# define the n = 225 training responses and produce the covariance matrix Sigma defined in Algorithm 1
 ySub <- yTtl[idx2D]
 geomSub <- geom[idx2D, , drop = F]
 geomSub[, 1] <- geomSub[, 1] * alphaTLR[1]
