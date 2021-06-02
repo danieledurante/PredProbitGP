@@ -177,13 +177,13 @@ alphaTN <- alphaPool[which.max(lkVecTN), ]
 
 Computation of predictive probabilities
 ================
-Here, we compute the predictive probabilities at the grid and random test locations under the four methods discussed in Section 3 for the scenario with `n = 250` (i.e., the training data are those observed at the 15 × 15 grid specified previously). The methods evaluated, are:
+Here, we **compute the predictive probabilities at the grid and random test locations** under the four methods discussed in Section 3 for the scenario with `n = 250` (i.e., the training data are those observed at the 15 × 15 grid specified previously). The methods evaluated, are:
   - The **TLR** strategy proposed in Section 2.1 of the article (requires `tlrmvnratio`)
   - The variational (**VB**) strategy proposed in Section 2.2 of the article (requires `functionsVariational.R`)
   - The **TN** strategy based on the calculation of the numerator and the denominator in eq (4) via [Botev (2017)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/rssb.12162) (requires `TruncatedNormal`)
   - The Monte Carlo strategy which evaluates predictive probabilities via **STAN** samples from the exact GP posterior (requires `rstan`)
 
-The step-by-step code with comments to implement the above methods and produce the output in Table 1 for the scenario `n = 250` is provided below.
+The **step-by-step code** to implement the above methods and produce the output in Table 1 for the scenario `n = 250` is provided below.
 
 **TLR**
 
