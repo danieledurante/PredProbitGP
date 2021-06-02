@@ -441,7 +441,7 @@ gHMC <- t(extract(HMCSamples)$g)
 
 # load the "geoR" library to compute predictive probabilities from STAN samples via ordinary kriging
 # *IMPORTANT*: This library requires XCode, which conflicts with other libraries used for TLR, VB and TN. 
-#              Hence, load this library only after TLR, VB and TN have been implementeed.
+#              Hence, load this library only after TLR, VB and TN have been implemented.
 library(geoR)
 
 # create the empty vector of predictive probabilities at random and grid test locations  
