@@ -4,7 +4,7 @@ This repository is associated with the article [**scalable computation of predic
 
 The documentation is organized in two main parts described below.  
 
-- [`Source Codes`](https://github.com/danieledurante/PredProbitGP/tree/main/Source%20Codes).  It contains commented source `R` functions to implement the methods presented in the article. More specifically, the library `tlrmvnratio.tar.gz` comprises all the routines related to **Algorithm 1** the article (see Section 2.1), whereas `functionsVariational.R` contains the source codes to implement **Algorithm 2** in the article (see Section 2.2).
+- [`Source Codes`](https://github.com/danieledurante/PredProbitGP/tree/main/Source%20Codes).  It contains commented source `R` functions to implement the methods presented in the article. More specifically, the library `tlrmvnratio.tar.gz` comprises all the routines related to **Algorithm 1** in the article (see Section 2.1), whereas `functionsVariational.R` contains the source codes to implement **Algorithm 2** in the article (see Section 2.2).
 
 - [`Tutorial.md`](https://github.com/danieledurante/PredProbitGP/blob/main/Tutorial.md). It contains a detailed tutorial on how to implement the methods and algorithms presented in the article. To accomplish this goal, we mainly focus on reproducing step-by-step the scenario `n = 250` of the simulation study in the article (see Section 3).
 
