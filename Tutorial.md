@@ -145,7 +145,7 @@ mle_func_TN <- function(alpha, geom, y) {
 }
 ```
 
-We now **define the grid of **`α`** values** for point-search, and **create the training sample for the scenario `n = 225`** by selecting a 15 × 15 sub-grid of equally-spaced configurations (along with their associated probability parameters and simulated responses) from the `10000` training locations previously simulated; see Section 3 in the article for additional details.
+We now **define the grid of **`α`** values** for point-search, and **create the training sample for the scenario `n = 225`** by selecting a 15 × 15 sub-grid of equally-spaced configurations (along with their associated probability parameters and simulated responses) from the `10000` training locations originally simulated; see Section 3 in the article for additional details.
 
 ``` r
 # alpha grid
