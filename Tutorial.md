@@ -447,7 +447,7 @@ library(geoR)
 # create the empty vector of predictive probabilities at random and grid test locations  
 geomUnknown <- rbind(geomUnknownRnd, geomUnknownGrid)
 
-# compute predictive probabilities at the firt location via ordinary kriging applied to the STAN samples and save runtime
+# compute predictive probabilities at the first location via ordinary kriging applied to the STAN samples and save runtime
 gUnknown <- apply(
   X = gHMC, MARGIN = 2,
   FUN = function(v) {
