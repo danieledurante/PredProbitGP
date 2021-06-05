@@ -101,9 +101,9 @@ yTtl <- rbinom(n = n + 200, size = 1, prob = prTtl)
 y <- yTtl[1:n]
 ```
 
-Estimation of GP parameters
+Estimation of GP hyperparameters
 ================
-As discussed in the article, Gaussian processes are commonly indexed by a (generally low) number of unknown parameters **`α`**, which typically enter the covariance kernel function. A simple and practically feasible strategy to **estimate such parameters** is to **maximize the marginal likelihood via a grid search**. As discussed in Section 2, this requires to evaluate cumulative distribution functions of multivariate Gaussian. Here, we address this goal by using both the proposed **tile-low-rank strategy** (`TLR`) and also an alternative solution relying on the **minimax-tilting method** (`TN`) by [Botev (2017)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/rssb.12162). To accomplish this task, let us first **define the two functions for computing the GP marginal likelihood** at multiple **`α`** values, under the two methods.
+As discussed in the article, Gaussian processes are commonly indexed by a (generally low) number of unknown hyperparameters **`α`**, which typically enter the covariance kernel function. A simple and practically feasible strategy to **estimate such values** is to **maximize the marginal likelihood via a grid search**. As discussed in Section 2, this requires to evaluate cumulative distribution functions of multivariate Gaussian. Here, we address this goal by using both the proposed **tile-low-rank strategy** (`TLR`) and also an alternative solution relying on the **minimax-tilting method** (`TN`) by [Botev (2017)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/rssb.12162). To accomplish this task, let us first **define the two functions for computing the GP marginal likelihood** at multiple **`α`** values, under the two methods.
 
 ``` r
 # TLR (leverages the `tlrmvnmvt` package)
@@ -145,7 +145,7 @@ mle_func_TN <- function(alpha, geom, y) {
 }
 ```
 
-We now **define the grid of **`α`** values** for point-search, and **create the training sample for the scenario `n = 225`** by selecting a 15 × 15 sub-grid of equally-spaced configurations (along with their associated probability parameters and simulated responses) from the `10000` known locations previously simulated; see Section 3 in the article for additional details.
+We now **define the grid of **`α`** values** for point-search, and **create the training sample for the scenario `n = 225`** by selecting a 15 × 15 sub-grid of equally-spaced configurations (along with their associated probability parameters and simulated responses) from the `10000` training locations previously simulated; see Section 3 in the article for additional details.
 
 ``` r
 # alpha grid
