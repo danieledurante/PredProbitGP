@@ -19,7 +19,7 @@ library(rstan)
 library(devtools)
 ```
 
-As described in Section 3, to generate the Gaussian process we first create `10000` **known locations** on a 100 × 100 grid in the unit square.
+As described in Section 3, to generate the Gaussian process we first create `10000` **training locations** on a 100 × 100 grid in the unit square.
 
 ``` r
 m <- 100
