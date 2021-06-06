@@ -1,6 +1,6 @@
 Description
 ================
-This tutorial contains guidelines and code to perform the analyses for the scenario `n = 225` in the simulation study of the article **scalable computation of predictive probabilities in probit models with Gaussian process priors**. In particular, you will find a detailed step-by-step guide and `R` code to **implement the methods under analysis** and to **reproduce the results in Table 1** for the scenario `n = 225` (Section 3). For implementation purposes, please **execute the code below considering the same order in which is presented**. 
+This tutorial contains guidelines and code to perform the analyses for the scenario `n = 225` in the simulation study of the article **scalable computation of predictive probabilities in probit models with Gaussian process priors**. In particular, you will find a detailed step-by-step guide and `R` code to **implement the methods under analysis** and to **reproduce the results in Table 1** for the scenario `n = 225` (Section 3). For implementation and reproducibility purposes, **execute the code below considering the same order in which is presented**. 
 
 Simulate the data 
 ================
